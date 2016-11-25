@@ -1,6 +1,6 @@
 #lang racket
 
-(define (make-account balance user-passwd)  
+(define (make-account balance user-passwd)
   (define (withdraw amount)
     (if (>= balance amount)
         (begin (set! balance (- balance amount))
