@@ -1,20 +1,21 @@
 #lang r5rs
 
 (define (count-pairs x)
-  (define (iter x path)
+  (define path '())
+  (define (iter x)
     (if (or (not (pair? x)) (visited? x path))
         0
-        (begin (cons path x)
-               (+ (count-pairs (car x))
-                  (count-pairs (cdr x))
+        (begin (set! path (cons x path))
+               (+ (iter (car x))
+                  (iter (cdr x))
                   1))))
 
   (define (visited? x path)
     (cond ((null? path) #f)
-          ((eq? x (car path) #t))
+          ((eq? x (car path)) #t)
           (else (visited? x (cdr path)))))
   
-  (iter x '()))
+  (iter x))
 
 (define x (list 'a 'b))
 
