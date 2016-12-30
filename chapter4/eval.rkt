@@ -241,7 +241,12 @@
 
 (define primitive-procedures (list (list 'car car)
                                    (list 'cdr cdr)
-                                   (list 'null? null?)))
+                                   (list 'cons cons)
+                                   (list 'null? null?)
+                                   (list '+ +)
+                                   (list '- -)
+                                   (list '* *)
+                                   (list '/ /)))
 
 (define (primitive-procedure-names)
   (map car primitive-procedures))
