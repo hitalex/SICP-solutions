@@ -1,0 +1,15 @@
+#lang r5rs
+
+(define (lookup-variable-value var env)
+  (define (env-loop env)
+    (define (scan frame)
+      (cond ((null? frame)
+             (env-loop (enclosing-environment env)))
+            ((eq? var (get-binding-var (get-current-binding frame)))
+             (get-binding-val (get-current-binding frame)))
+            (else (scan (rest-bindings frame)))))
+    (if (eq? env the-empty-environment)
+        (error "Unbound variable" var)
+        (let ((frame (first-frame env)))
+          (scan frame))))
+  (env-loop env))
