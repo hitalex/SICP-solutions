@@ -276,6 +276,54 @@
   (apply-in-underlying-scheme
    (primitive-implementation proc) args))
 
+;; 将包含多个define定义的函数转换为set!形式
+;; body作为list读入
+(define (scan-out-defines body-seq)
+  (define (find body-seq define-var-list define-body-list exp-body)
+    (if (null? body-seq)
+        (list define-var-list define-body-list exp-body)
+        (let ((exp (first-exp body-seq)))
+          (if (definition? exp)
+              (find (rest-exps body-seq) (cons (cadr exp) define-var-list) (cons (caddr exp) define-body-list) exp-body)
+              (find (rest-exps body-seq) define-var-list define-body-list (cons exp exp-body))))))
+
+  ;; 根据变量和对应值的列表，形成let中的变量定义部分
+  (define (make-var-defs var-list def-list)
+    (define (iter tmp-var-list tmp-def-list result)
+      (if (null? tmp-var-list)
+          result
+          (iter (cdr tmp-var-list) (cdr tmp-def-list) (cons (cons (car tmp-var-list)
+                                                                  (car tmp-def-list))
+                                                            result))))
+    (iter var-list def-list '()))
+
+  ;; 形成长度为n的列表，其中所有值都为val
+  (define (make-value-list val n)
+    (define (iter m result)
+      (if (= m 0)
+          result
+          (iter (- m 1) (cons val result))))
+    (iter n '()))
+
+  ;; 根据变量列表和对应的值（定义）列表，形成set!序列
+  (define (gen-set-seq define-var-list define-body-list)
+    (define (make-set! var exp)
+      (list 'set! var exp))
+    (define (iter tmp-var-list tmp-body-list result)
+      (if (null? tmp-var-list)
+          result
+          (iter (cdr tmp-var-list) (cdr tmp-body-list) (cons (make-set! (car tmp-var-list)
+                                                                        (car tmp-body-list))
+                                                             result))))
+    (iter define-var-list define-body-list '()))
+  
+  (let ((result (find body-seq '() '() '())))
+    (let ((define-var-list (car result))
+          (define-body-list (cadr result))
+          (exp-body (caddr result)))
+      (make-let (make-var-defs define-var-list (make-value-list '*unassigned* (length define-var-list)))
+                (cons (gen-set-seq define-var-list define-body-list) exp-body)))))
+
 (#%provide eval)
 (#%provide the-global-environment)
 (#%provide compound-procedure?)
